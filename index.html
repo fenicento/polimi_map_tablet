@@ -7,12 +7,13 @@
         <link rel="stylesheet" type="text/css" href="css/leaflet.ie.css" />
     <![endif]-->
     <script src="leaflet/leaflet.js"></script>
+    <script src="leaflet.label.js"></script>
     <!--<script src="zepto.js"></script>
     <script src="dnd/zepto-dnd.js"></script>-->
     <script src="js/jquery-1.9.1.js"></script>
     <script src="js/jquery-ui-1.10.3.custom.min.js"></script>
     <script src="jquery.ui.touch-punch.js"></script>
-    <script src="new-countries.json" type="text/javascript"></script>
+    <script src="new-countries3.json" type="text/javascript"></script>
     <style>
         html, body, #map {
             height: 100%;
@@ -89,7 +90,7 @@
      	if(e.target.feature.properties.opacity>0.4) {
      		if(e.target.feature.properties.sel==0) {
       		//map.fitBounds(e.target.getBounds());
-      		e.target.setStyle({fillColor:'#416F6C'})
+      		e.target.setStyle({fillColor:'#66daa6'})
       		e.target.feature.properties.sel=1;
       	}
       	else {
@@ -105,7 +106,7 @@
       return {
         weight: 1,
         opacity: 1,
-        color: '#333',
+        color: '#000',
         fillOpacity: feature.properties.opacity,
         //fillColor: "#b94a48"
         fillColor: "#ffffff"
@@ -119,13 +120,33 @@
         color: '#333',
         fillOpacity: feature.properties.opacity,
         //fillColor: "#b94a48"
-        fillColor: "#ff8833"
+        fillColor: "#66daa6"
       };
     }
 
         //var hydro = new L.LayerGroup();
-        L.geoJson(world, {style: style, onEachFeature: onEachFeature}).addTo(map);
+        var geo = L.geoJson(world, {style: style, onEachFeature: onEachFeature});
+        geo.addTo(map);
+        console.log("geo")
+        console.log(geo);
 
+
+	map.addEventListener('zoomend',function(e) {
+		
+		if(e.target._zoom>=6) {
+			
+			
+			label = new L.Label();
+        	label.setContent("MultiPolygon static label");
+        	label.setLatLng(polygon.getBounds().getCenter());
+        	map.showLabel(label);
+			
+			console.log(map)
+		}
+		
+    	});
+    	
+	
     </script>
     
     
