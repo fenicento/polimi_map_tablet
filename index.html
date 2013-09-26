@@ -60,12 +60,67 @@
         	display:none;
         }
         
+        .leaflet-popup-close-button {
+        display:none;
+    }
+
+      .leaflet-label-overlay {
+          line-height:0px;
+          margin-top: 9px;
+          position:absolute;
+          z-index:3;
+          text-transform: uppercase;
+          color:#666;
+          font-weight: bold;
+          width:300px;
+          margin-left:-30px;
+      }
     </style>
     <title>Polimi 150 - internazionalization</title>
  </head>
  
 <body>
     <div id="map"></div>
+
+<script>
+  //CLASS FOR LABEL
+ L.LabelOverlay = L.Class.extend({
+        initialize: function(/*LatLng*/ latLng, /*String*/ label, options) {
+            this._latlng = latLng;
+            this._label = label;
+            L.Util.setOptions(this, options);
+        },
+        options: {
+            offset: new L.Point(0, 2)
+        },
+        onAdd: function(map) {
+            this._map = map;
+            if (!this._container) {
+                this._initLayout();
+            }
+            map.getPanes().overlayPane.appendChild(this._container);
+            this._container.innerHTML = this._label;
+            map.on('viewreset', this._reset, this);
+            this._reset();
+        },
+        onRemove: function(map) {
+            map.getPanes().overlayPane.removeChild(this._container);
+            map.off('viewreset', this._reset, this);
+        },
+        _reset: function() {
+            var pos = this._map.latLngToLayerPoint(this._latlng);
+            var op = new L.Point(pos.x + this.options.offset.x, pos.y - this.options.offset.y);
+            L.DomUtil.setPosition(this._container, op);
+        },
+        _initLayout: function() {
+            this._container = L.DomUtil.create('div', 'leaflet-label-overlay');
+        }
+    });  
+
+
+
+</script>
+
     <script type="text/javascript">
 
        var map = L.map('map',{
@@ -80,10 +135,19 @@
     
     console.log(world);
     
+var labels = []
+
     function onEachFeature(feature, layer) {
+      //console.log(layer)
+      //console.log(layer.getBounds().getCenter())
+
       layer.on({
         click: zoomToFeature
       });
+      
+      labelTitle = new L.LabelOverlay(layer.getBounds().getCenter(), feature.properties.name);
+      //map.addLayer(labelTitle);
+      labels.push(labelTitle);
     }
     
      function zoomToFeature(e) {	
@@ -124,28 +188,41 @@
       };
     }
 
-        //var hydro = new L.LayerGroup();
         var geo = L.geoJson(world, {style: style, onEachFeature: onEachFeature});
         geo.addTo(map);
-        console.log("geo")
-        console.log(geo);
+
+ 
+  map.addEventListener('zoomstart',function(e,f) {
+      for(var i = 0; i<labels.length; i++) {
+          map.removeLayer(labels[i]);
+         }
+
+  });
 
 
-	map.addEventListener('zoomend',function(e) {
+	map.addEventListener('zoomend',function(e,f) {
 		
 		if(e.target._zoom>=6) {
-			
-			
-			label = new L.Label();
-        	label.setContent("MultiPolygon static label");
-        	label.setLatLng(polygon.getBounds().getCenter());
-        	map.showLabel(label);
-			
-			console.log(map)
-		}
+	       for(var i = 0; i<labels.length; i++) {
+          map.addLayer(labels[i]);
+         }
+      }
 		
-    	});
-    	
+  });
+
+  map.on('movestart', function () {
+      for(var i = 0; i<labels.length; i++) {
+          map.removeLayer(labels[i]);
+         }
+  });
+    
+  map.on('moveend', function (e) {
+    if(e.target._zoom>=6) {
+      for(var i = 0; i<labels.length; i++) {
+          map.addLayer(labels[i]);
+         }
+       }
+  });	
 	
     </script>
     
